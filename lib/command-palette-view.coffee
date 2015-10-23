@@ -2,6 +2,8 @@ _ = require 'underscore-plus'
 {SelectListView, $, $$} = require 'atom-space-pen-views'
 {match} = require 'fuzzaldrin-plus'
 
+fuzzyFilter = null # defer until used
+
 module.exports =
 class CommandPaletteView extends SelectListView
   @activate: ->
@@ -43,6 +45,7 @@ class CommandPaletteView extends SelectListView
 
     commands = atom.commands.findCommands(target: @eventElement)
     commands = _.sortBy(commands, 'displayName')
+
     @setItems(commands)
 
     @focusFilterEditor()
@@ -86,3 +89,27 @@ class CommandPaletteView extends SelectListView
   confirmed: ({name}) ->
     @cancel()
     @eventElement.dispatchEvent(new CustomEvent(name, bubbles: true, cancelable: true))
+
+  populateList: ->
+    return unless @items?
+
+    filterQuery = @getFilterQuery()
+    if filterQuery.length
+      fuzzyFilter ?= require('fuzzaldrin-plus').filter
+      filteredItems = fuzzyFilter(@items, filterQuery, key: @getFilterKey())
+    else
+      filteredItems = @items
+
+    @list.empty()
+    if filteredItems.length
+      @setError(null)
+
+      for i in [0...Math.min(filteredItems.length, @maxItems)]
+        item = filteredItems[i]
+        itemView = $(@viewForItem(item))
+        itemView.data('select-list-item', item)
+        @list.append(itemView)
+
+      @selectItemView(@list.find('li:first'))
+    else
+      @setError(@getEmptyMessage(@items.length, filteredItems.length))

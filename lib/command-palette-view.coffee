@@ -1,6 +1,6 @@
 _ = require 'underscore-plus'
 {SelectListView, $, $$} = require 'atom-space-pen-views'
-{match} = require 'fuzzaldrin'
+{match} = require 'fuzzaldrin-plus'
 
 module.exports =
 class CommandPaletteView extends SelectListView
